@@ -23,6 +23,9 @@ const { writeFileSync } = require('fs')
 const { join } = require('path')
 const { endpoints, types } = require('../output/schema/schema.json')
 
+const inferredSearchResponseMethodDefinition =
+  `search<TDocument = unknown, TSearchRequest extends T.SearchRequest = T.SearchRequest, TContext = unknown>( params:TSearchRequest ):TransportRequestPromise<ApiResponse<SearchResponse<TSearchRequest>>>`;
+
 const clientDefinitions = `/*
  * Licensed to Elasticsearch B.V. under one or more contributor
  * license agreements. See the NOTICE file distributed with
@@ -50,6 +53,9 @@ import {
   ApiError,
   ApiResponse
 } from '../lib/Transport'
+import {
+  SearchResponse
+} from '../lib/Search'
 
 /**
   * We are still working on this type, it will arrive soon.
@@ -59,7 +65,9 @@ import {
 type TODO = Record<string, any>
 
 declare type callbackFn<TResponse, TContext> = (err: ApiError, result: ApiResponse<TResponse, TContext>) => void;
-declare class ESAPI {\n`
+declare class ESAPI {
+  ${inferredSearchResponseMethodDefinition}
+`
 
 const kibanaDefinitions = `/*
  * Licensed to Elasticsearch B.V. under one or more contributor
@@ -99,6 +107,10 @@ import {
   TransportRequestParams,
   TransportRequestOptions
 } from '../lib/Transport'
+import {
+  SearchResponse
+} from '../lib/Search'
+
 import * as T from './types'
 
 /**
@@ -141,6 +153,7 @@ interface KibanaClient {
   once(event: 'sniff', listener: (err: ApiError, meta: RequestEvent) => void): this;
   once(event: 'resurrect', listener: (err: null, meta: ResurrectEvent) => void): this;
   off(event: string | symbol, listener: (...args: any[]) => void): this;
+  ${inferredSearchResponseMethodDefinition}
 `
 
 function createClientTypes (kibana = false) {
